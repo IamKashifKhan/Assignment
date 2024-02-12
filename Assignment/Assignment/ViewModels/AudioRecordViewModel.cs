@@ -27,6 +27,20 @@ namespace Assignment.ViewModels
             }
         }
 
+        private string _buttonText;
+
+        public string ButtonText
+        {
+            get { return _buttonText; }
+            set
+            {
+                if (_buttonText != value)
+                {
+                    _buttonText = value;
+                    OnPropertyChanged(nameof(ButtonText));
+                }
+            }
+        }
 
         private readonly AudioRecorderService audioRecorderService = new AudioRecorderService();
 
@@ -47,6 +61,7 @@ namespace Assignment.ViewModels
             RecordAudioCommand = new Command(RecordAudio);
             PlayAudioCommand = new Command(PlayAudio);
             GetAudiofromCache();
+            ButtonText = "Start Recording";
         }
 
         private void PlayAudio(object obj)
@@ -66,6 +81,7 @@ namespace Assignment.ViewModels
 
             if (audioRecorderService.IsRecording)
             {
+                ButtonText = "Start Recording";
                 await audioRecorderService.StopRecording();
                 try
                 {
@@ -95,6 +111,7 @@ namespace Assignment.ViewModels
             }
             else
             {
+                ButtonText = "Stop Recording";
                 await audioRecorderService.StartRecording();
             }
         }

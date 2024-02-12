@@ -23,7 +23,7 @@
 			<Frame BackgroundColor="#2196F3" Padding="24" CornerRadius="0">
 				<Label Text="Audio Sample" HorizontalTextAlignment="Center" TextColor="White" FontSize="36"/>
 			</Frame>
-			<Button Text="Start/Stop Recording" Command="{Binding RecordAudioCommand}" Clicked="Button_Clicked" />
+			<Button Text="{Binding ButtonText}" Command="{Binding RecordAudioCommand}" Clicked="Button_Clicked" />
 		</StackLayout>
 		<StackLayout  Grid.Row="1">
 			<ListView HasUnevenRows="True" SeparatorVisibility="Default" ItemsSource="{Binding AudioItems}">
