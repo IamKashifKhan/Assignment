@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+	xmlns="http://xamarin.com/schemas/2014/forms"
+	xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Assignment.Views.AudioRecordPage"
+	x:Name="MyPage"
+	xmlns:vm="clr-namespace:Assignment.ViewModels"
+             Title="{Binding Title}">
+	<ContentPage.BindingContext>
+		<vm:AudioRecordViewModel />
+	</ContentPage.BindingContext>
+	<ContentPage.Resources>
+		<ResourceDictionary>
+			<Color x:Key="Accent">#96d1ff</Color>
+		</ResourceDictionary>
+	</ContentPage.Resources>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+		<StackLayout>
+			<Frame BackgroundColor="#2196F3" Padding="24" CornerRadius="0">
+				<Label Text="Audio Sample" HorizontalTextAlignment="Center" TextColor="White" FontSize="36"/>
+			</Frame>
+			<Button Text="Start/Stop Recording" Command="{Binding RecordAudioCommand}" Clicked="Button_Clicked" />
+		</StackLayout>
+		<StackLayout  Grid.Row="1">
+			<ListView HasUnevenRows="True" SeparatorVisibility="Default" ItemsSource="{Binding AudioItems}">
+				<ListView.ItemTemplate>
+					<DataTemplate>
+						<ViewCell>
+
+					<StackLayout HeightRequest="100" VerticalOptions="FillAndExpand">
+						<Frame Padding="0" Margin="0">
+							<Grid ColumnDefinitions="*,80" RowDefinitions="30,30" Padding="10">
+								<Label TextColor="Black" Margin="10,0,0,0" Text="{Binding Timestamp}"></Label>
+								<!-- Display the audio timestamp -->
+								<!--<StackLayout BackgroundColor="Pink" Grid.Column="1" Grid.Row="0" Grid.RowSpan="2">
+
+
+								</StackLayout>-->
+								<!-- Add a play button -->
+								<Button VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand" TextColor="Green" Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Text="Play" Command="{Binding Source={x:Reference Name=MyPage}, Path=BindingContext.PlayAudioCommand}" CommandParameter="{Binding}" />
+								<!-- Optionally display other audio information -->
+								<!-- <Label Text="{Binding OtherAudioInfo}" VerticalOptions="Center" /> -->
+							</Grid>
+							</Frame>
+						</StackLayout>
+						</ViewCell>
+					</DataTemplate>
+				</ListView.ItemTemplate>
+			</ListView>
+		</StackLayout>
+	</Grid>
+</ContentPage>
+
