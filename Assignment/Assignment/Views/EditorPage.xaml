@@ -13,8 +13,7 @@
         </Grid.RowDefinitions>
         <controls:CustomWebView x:Name="editorView" Grid.Row="0" Source="{Binding CustomSource}" EvaluateJavascript="{Binding EvaluateJavascript, Mode=OneWayToSource}" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand"/>
         <StackLayout Padding="10" Grid.Row="1" Orientation="Horizontal">
-                <Button Text="Eval JavaScript" Clicked="Button_Clicked"/>
-                <Button Text="Eval JavaScript" Command="{Binding EvalJS}" />
+                 <Button Text="Eval JavaScript" Command="{Binding EvalJS}" />
          </StackLayout>
     </Grid>
  </ContentPage>

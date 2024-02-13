@@ -19,7 +19,7 @@ namespace Assignment.Droid.Objects
         {
             base.OnPageFinished(view, url);
 
-            EvalJS(view, "alert('Called from OnPageFinished()');");
+            //EvalJS(view, "alert('Called from OnPageFinished()');");
         }
 
         public void EvalJS(WebView webview, string js)
