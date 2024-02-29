@@ -63,6 +63,9 @@
     <PackageReference Include="akavache">
       <Version>9.1.20</Version>
     </PackageReference>
+    <PackageReference Include="Plugin.CurrentActivity">
+      <Version>2.1.0.4</Version>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MainActivity.cs" />
@@ -72,6 +75,8 @@
     <Compile Include="Objects\BaseUrl.cs" />
     <Compile Include="Objects\CustomJavaScriptInterface.cs" />
     <Compile Include="Objects\CustomWebViewClient.cs" />
+    <Compile Include="SpeechToTextAndroid.cs" />
+    <Compile Include="MainApplication.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

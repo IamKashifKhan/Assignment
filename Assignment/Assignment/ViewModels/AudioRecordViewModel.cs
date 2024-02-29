@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Threading.Tasks;
+using System.Timers;
 using System.Windows.Input;
 using Assignment.Interfaces;
 using Assignment.Models;
+using Assignment.Services;
 using Plugin.AudioRecorder;
 using Xamarin.Essentials;
 using Xamarin.Forms;
+using static Xamarin.Forms.Internals.GIFBitmap;
 
 namespace Assignment.ViewModels
 {
@@ -52,20 +56,104 @@ namespace Assignment.ViewModels
 
         public ICommand PlayAudioCommand { get; }
 
+        private ISpeechToText _speechRecongnitionInstance;
 
-        
+        public ICommand AutoRecordAudioCommand { get; }
+
+        bool isRecordingInProgress { get; set; }
+
+        bool disableAutoRecord { get; set; }
+
+        private Timer timer1;
 
         public AudioRecordViewModel()
         {
             Title = "Audio recorder";
             RecordAudioCommand = new Command(RecordAudio);
             PlayAudioCommand = new Command(PlayAudio);
+            AutoRecordAudioCommand = new Command(AutoRecordAudio);
+            GetPermissions();
             GetAudiofromCache();
             ButtonText = "Start Recording";
+
+            try
+            {
+                _speechRecongnitionInstance = DependencyService.Get<ISpeechToText>();
+            }
+            catch (Exception ex)
+            {
+                //recon.Text = ex.Message;
+            }
+
+
+            MessagingCenter.Subscribe<ISpeechToText, string>(this, StringConstants.SPEECH_TO_TEXT, (sender, args) =>
+            {
+                SpeechToTextFinalResultRecieved(args);
+            });
+
+            MessagingCenter.Subscribe<ISpeechToText>(this, "Final", (sender) =>
+            {
+               // start.IsEnabled = true;
+            });
+
+            MessagingCenter.Subscribe<IMessageSender, string>(this, StringConstants.SPEECH_TO_TEXT, (sender, args) =>
+            {
+                SpeechToTextFinalResultRecieved(args);
+            });
+
         }
+
+        private async void GetPermissions()
+        {
+            var status = await Permissions.RequestAsync<Permissions.Microphone>();
+        }
+
+        private void AutoRecordAudio(object obj)
+        {
+            disableAutoRecord = false;
+            AutoRecord(disableAutoRecord);
+        }
+        private async Task AutoRecord(bool disable)
+        {
+            try
+            {
+                if (!disable)
+                    _speechRecongnitionInstance.StartSpeechToText();
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
+        private async void SpeechToTextFinalResultRecieved(string args)
+        {
+            
+            if (args != StringConstants.NO_INPUT || args.Length > 1)
+            {
+                if (isRecordingInProgress) return;
+                await Task.Delay(1000);
+                StartRecording();
+                timer1 = new Timer();
+                timer1.Interval = 5000; // Interval set to 10 seconds
+                timer1.Elapsed += OnTimedEvent; ;
+                timer1.Start();
+            }
+
+        }
+
+        private void OnTimedEvent(object sender, ElapsedEventArgs e)
+        {
+            isRecordingInProgress = false;
+             timer1.Stop();
+            timer1.Dispose();
+            StopRecording();
+        }
+     
+
 
         private void PlayAudio(object obj)
         {
+            disableAutoRecord = true;
             AudioItem audioItem = (AudioItem)obj;
             string tempFileName = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".wav");
             File.WriteAllBytes(tempFileName, audioItem.AudioData);
@@ -74,45 +162,59 @@ namespace Assignment.ViewModels
 
         private async void RecordAudio(object obj)
         {
+
+            if (ButtonText == StringConstants.START_RECORDING)
+            {
+                StartRecording();
+            }
+            else
+            {
+                StopRecording(false);
+            }
+
+         }
+
+        private async Task StartRecording()
+        {
             var status = await Permissions.RequestAsync<Permissions.Microphone>();
 
             if (status != PermissionStatus.Granted)
                 return;
+            ButtonText = StringConstants.STOP_RECORDING;
+            await audioRecorderService.StartRecording();
+        }
 
-            if (audioRecorderService.IsRecording)
+        private async Task StopRecording(bool showGoogleSTT=true)
+        {
+           
+             await audioRecorderService.StopRecording();
+            try
             {
-                ButtonText = "Start Recording";
-                await audioRecorderService.StopRecording();
-                try
+               // audioPlayer.Play(audioRecorderService.GetAudioFilePath());
+                await Task.Delay(1000);
+                var audiofilepath = audioRecorderService.GetAudioFilePath();
+                byte[] fileBytes = File.ReadAllBytes(audiofilepath);
+                //  await localCache.SaveItemInCache<byte[]>("test", fileBytes);
+                var newAudioItem = new AudioItem
                 {
-                    audioPlayer.Play(audioRecorderService.GetAudioFilePath());
-                    var audiofilepath = audioRecorderService.GetAudioFilePath();
-                    byte[] fileBytes = File.ReadAllBytes(audiofilepath);
-                  //  await localCache.SaveItemInCache<byte[]>("test", fileBytes);
-                    var newAudioItem = new AudioItem
-                    {
-                        Id = Guid.NewGuid(),
-                        AudioData = fileBytes,
-                       Timestamp = DateTime.Now
-                    };
+                    Id = Guid.NewGuid(),
+                    AudioData = fileBytes,
+                    Timestamp = DateTime.Now
+                };
 
-                    // Add the new AudioItem to the ObservableCollection
-                    AudioItems.Add(newAudioItem);
-                  
-                    //await localCache.SaveItemInCache<byte[]>("test", fileBytes);
-                    await localCache.SaveItemInCache<ObservableCollection<AudioItem>>("AudioList", AudioItems);
+                // Add the new AudioItem to the ObservableCollection
+                AudioItems.Add(newAudioItem);
 
-                }
-                catch (Exception ex)
-                {
+                //await localCache.SaveItemInCache<byte[]>("test", fileBytes);
+                await localCache.SaveItemInCache<ObservableCollection<AudioItem>>("AudioList", AudioItems);
 
-                }
-
+                if (showGoogleSTT) AutoRecord(disableAutoRecord);
+                isRecordingInProgress = false;
+                ButtonText = StringConstants.START_RECORDING;
             }
-            else
+            catch (Exception ex)
             {
-                ButtonText = "Stop Recording";
-                await audioRecorderService.StartRecording();
+                ButtonText = StringConstants.START_RECORDING;
             }
         }
 
@@ -131,14 +233,7 @@ namespace Assignment.ViewModels
                 {
                     AudioItems = new ObservableCollection<AudioItem>();
                 }
-                //  var localcache = DependencyService.Get<ILocalCache>();
-                //var audiobyte = await localCache.GetCacheItem<byte[]>("test");
-                //if (audiobyte != null)
-                //{
-                //    string tempFileName = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".wav");
-                //    File.WriteAllBytes(tempFileName, audiobyte);
-                //    audioPlayer.Play(tempFileName);
-                //}
+                
             }
             catch (Exception ex)
             {
